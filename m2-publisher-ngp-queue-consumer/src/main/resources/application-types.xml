@@ -1,0 +1,253 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="requestJson" format="json">
+      <types:shape format="weave" example="request.json"><![CDATA[%dw 2.0
+type requestJson = {|
+  id: Number {"typeId": "int"}, 
+  group_id: Number {"typeId": "int"}, 
+  default_billing: String, 
+  default_shipping: String, 
+  confirmation: String, 
+  created_at: String, 
+  updated_at: String, 
+  created_in: String, 
+  dob: String, 
+  email: String, 
+  firstname: String, 
+  lastname: String, 
+  middlename: String, 
+  prefix: String, 
+  suffix: String, 
+  gender: Number {"typeId": "int"}, 
+  store_id: Number {"typeId": "int"}, 
+  taxvat: String, 
+  website_id: Number {"typeId": "int"}, 
+  addresses: Array<{|
+    id: Number {"typeId": "int"}, 
+    customer_id: Number {"typeId": "int"}, 
+    region: {|
+      region_code: String, 
+      region: String, 
+      region_id: Number {"typeId": "int"}, 
+      extension_attributes: {|  |}
+    |}, 
+    region_id: Number {"typeId": "int"}, 
+    country_id: String, 
+    street: Array<String>, 
+    company: String, 
+    telephone: String, 
+    fax: String, 
+    postcode: String, 
+    city: String, 
+    firstname: String, 
+    lastname: String, 
+    middlename: String, 
+    prefix: String, 
+    suffix: String, 
+    vat_id: String, 
+    default_shipping: Boolean, 
+    default_billing: Boolean, 
+    extension_attributes: {|  |}, 
+    custom_attributes: Array<{|
+      attribute_code: String, 
+      value: String
+    |}>
+  |}>, 
+  disable_auto_group_change: Number {"typeId": "int"}, 
+  extension_attributes: {|
+    company_attributes: {|
+      customer_id: Number {"typeId": "int"}, 
+      company_id: Number {"typeId": "int"}, 
+      job_title: String, 
+      status: Number {"typeId": "int"}, 
+      telephone: String, 
+      extension_attributes: {|  |}
+    |}, 
+    is_subscribed: Boolean
+  |}, 
+  custom_attributes: Array<{|
+    attribute_code: String, 
+    value: String
+  |}>
+|} {"MetadataFormat": "json",
+"example": "{\"id\":0,\"group_id\":0,\"default_billing\":\"string\",\"default_shipping\":\"string\",\"confirmation\":\"string\",\"created_at\":\"string\",\"updated_at\":\"string\",\"created_in\":\"string\",\"dob\":\"string\",\"email\":\"string\",\"firstname\":\"string\",\"lastname\":\"string\",\"middlename\":\"string\",\"prefix\":\"string\",\"suffix\":\"string\",\"gender\":0,\"store_id\":0,\"taxvat\":\"string\",\"website_id\":0,\"addresses\":[{\"id\":0,\"customer_id\":0,\"region\":{\"region_code\":\"string\",\"region\":\"string\",\"region_id\":0,\"extension_attributes\":{}},\"region_id\":0,\"country_id\":\"string\",\"street\":[\"string\"],\"company\":\"string\",\"telephone\":\"string\",\"fax\":\"string\",\"postcode\":\"string\",\"city\":\"string\",\"firstname\":\"string\",\"lastname\":\"string\",\"middlename\":\"string\",\"prefix\":\"string\",\"suffix\":\"string\",\"vat_id\":\"string\",\"default_shipping\":true,\"default_billing\":true,\"extension_attributes\":{},\"custom_attributes\":[{\"attribute_code\":\"string\",\"value\":\"string\"}]}],\"disable_auto_group_change\":0,\"extension_attributes\":{\"company_attributes\":{\"customer_id\":0,\"company_id\":0,\"job_title\":\"string\",\"status\":0,\"telephone\":\"string\",\"extension_attributes\":{}},\"is_subscribed\":true},\"custom_attributes\":[{\"attribute_code\":\"string\",\"value\":\"string\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="enterpriseDataModel" format="json">
+      <types:shape format="weave" example="enterpriseDataModel.json"><![CDATA[%dw 2.0
+type enterpriseDataModel = {|
+  "Account Age": String, 
+  "Account Currency": String, 
+  "Account Name": String, 
+  "Account Number": String, 
+  "Account Owner": String, 
+  "Account Record Type": String, 
+  "Account Site": String, 
+  "Account Source": String, 
+  Age: String, 
+  "Age verified": String, 
+  "Annual Revenue": String, 
+  Assistant: String, 
+  "Asst. Phone": String, 
+  "Billing Address": String, 
+  "Birth Date": String, 
+  "Birth Place": String, 
+  Birthdate: String, 
+  Brand: String, 
+  "Brand Image/Aw are": String, 
+  "Brand social": String, 
+  Categories: String, 
+  Category: String, 
+  "Channel Program Level Name": String, 
+  "Channel Program Name": String, 
+  Cigarettes: String, 
+  "Cigarettes Consumption": String, 
+  "Cigarettes Consumption (Before Glo)": String, 
+  Code: String, 
+  "Consumer Age": String, 
+  "Consumer Date": String, 
+  "Consumer Date Time": String, 
+  Convert: String, 
+  Country: String, 
+  "Created By": String, 
+  "Created by Profile": String, 
+  "Data.com Key": String, 
+  Department: String, 
+  Description: String, 
+  "Direct Consumer Check": String, 
+  "Do Not Call": String, 
+  "Drop the Chain": String, 
+  "Early Adopter": String, 
+  Education: String, 
+  Email: String, 
+  "Email Opt Out": String, 
+  "Email verified": String, 
+  Employees: String, 
+  "Estimated DAC": String, 
+  "External Companies Authorization": String, 
+  "External Customer ID": String, 
+  Fax: String, 
+  "Fax Opt Out": String, 
+  "Fiscal Code": String, 
+  "Fiscal Code Required": String, 
+  "Flagship Assistance": String, 
+  "Full Name": String, 
+  Gender: String, 
+  "Glo Agent": String, 
+  "Glo and Cigarettes": String, 
+  "Glo Consumption": String, 
+  "Glo Future Consumption": String, 
+  "Glo recommendation": String, 
+  "Glo Usage": String, 
+  "Glo Usage Description": String, 
+  "Health Lifestyle": String, 
+  Heroku_External_Id: String, 
+  "Home Phone": String, 
+  "I am over 18 years old": String, 
+  "In Flight Hypercare": String, 
+  Industry: String, 
+  "Internet Consumption": String, 
+  "Is App User": String, 
+  "Is Consumer": String, 
+  "Is Trialist": String, 
+  Job: String, 
+  "Last Call Type": String, 
+  "Last Modified By": String, 
+  "Last Stay-in-Touch Request Date": String, 
+  "Last Stay-in-Touch Save Date": String, 
+  "Lead Source": String, 
+  "Lost Date": String, 
+  Loyal: String, 
+  "Mailing Address": String, 
+  "Market Research Authorization": String, 
+  "Member get Member Code": String, 
+  "Member get Member Promotional Code": String, 
+  "MgM Counter": String, 
+  Mobile: String, 
+  "More Privacy Details1": String, 
+  "More Privacy Details2": String, 
+  "More Privacy Details3": String, 
+  "More Privacy Details4": String, 
+  "More Privacy Details5": String, 
+  "National ID#": String, 
+  "Neostick GR": String, 
+  Neostik: String, 
+  "Neostik Usage": String, 
+  "Neostik Usage per day": String, 
+  "New sletter and Commercial Authorization": String, 
+  "Other Address": String, 
+  "Other devices Usage": String, 
+  "Other Phone": String, 
+  "Ow ner Profile": String, 
+  "Ow nership": String, 
+  "Parent Account": String, 
+  "Partner Account": String, 
+  "Passionate Ow ner": String, 
+  "Passionate Trial Check": String, 
+  "Personal Data Registration Authorization": String, 
+  Phone: String, 
+  "Phone Country Code": String, 
+  "Phone Verified": String, 
+  "Post Trial Consumer Check": String, 
+  "Postal Code": String, 
+  "Preferred Tobacconist Shop": String, 
+  "Privacy Details": String, 
+  "Privacy Permission Changed": String, 
+  "Privacy Policy": String, 
+  "Pushed to Tobbaconist": String, 
+  "Range (TAR)": String, 
+  Rating: String, 
+  "Related Lead": String, 
+  "Related Lead Created Profile": String, 
+  "Related Lead Source": String, 
+  "Rew ard Profile": String, 
+  "Rew ard Profile Code": String, 
+  Sector: String, 
+  "Shipping Address": String, 
+  "SIC Code": String, 
+  "SIC Description": String, 
+  "Skip Repurchase Lock": String, 
+  "Smoke Habits": String, 
+  "SMS Opt Out": String, 
+  Status: String, 
+  "Store ID": String, 
+  "Team Leader Check": String, 
+  "Ticker Symbol": String, 
+  "Time as a smoker": String, 
+  "Time of day": String, 
+  Title: String, 
+  "Trial Experience": String, 
+  "Trial Feedback Authorization": String, 
+  Type: String, 
+  Use: String, 
+  "Use Reason": String, 
+  User: String, 
+  Variant: String, 
+  Website: String, 
+  "Wrong Phone Number": String, 
+  Account: String
+|} {"MetadataFormat": "json",
+"example": "{\"Account Age\":\"\",\"Account Currency\":\"\",\"Account Name\":\"\",\"Account Number\":\"\",\"Account Owner\":\"\",\"Account Record Type\":\"\",\"Account Site\":\"\",\"Account Source\":\"\",\"Age\":\"\",\"Age verified\":\"\",\"Annual Revenue\":\"\",\"Assistant\":\"\",\"Asst. Phone\":\"\",\"Billing Address\":\"\",\"Birth Date\":\"\",\"Birth Place\":\"\",\"Birthdate\":\"\",\"Brand\":\"\",\"Brand Image\/Aw are\":\"\",\"Brand social\":\"\",\"Categories\":\"\",\"Category\":\"\",\"Channel Program Level Name\":\"\",\"Channel Program Name\":\"\",\"Cigarettes\":\"\",\"Cigarettes Consumption\":\"\",\"Cigarettes Consumption (Before Glo)\":\"\",\"Code\":\"\",\"Consumer Age\":\"\",\"Consumer Date\":\"\",\"Consumer Date Time\":\"\",\"Convert\":\"\",\"Country\":\"\",\"Created By\":\"\",\"Created by Profile\":\"\",\"Data.com Key\":\"\",\"Department\":\"\",\"Description\":\"\",\"Direct Consumer Check\":\"\",\"Do Not Call\":\"\",\"Drop the Chain\":\"\",\"Early Adopter\":\"\",\"Education\":\"\",\"Email\":\"\",\"Email Opt Out\":\"\",\"Email verified\":\"\",\"Employees\":\"\",\"Estimated DAC\":\"\",\"External Companies Authorization\":\"\",\"External Customer ID\":\"\",\"Fax\":\"\",\"Fax Opt Out\":\"\",\"Fiscal Code\":\"\",\"Fiscal Code Required\":\"\",\"Flagship Assistance\":\"\",\"Full Name\":\"\",\"Gender\":\"\",\"Glo Agent\":\"\",\"Glo and Cigarettes\":\"\",\"Glo Consumption\":\"\",\"Glo Future Consumption\":\"\",\"Glo recommendation\":\"\",\"Glo Usage\":\"\",\"Glo Usage Description\":\"\",\"Health Lifestyle\":\"\",\"Heroku_External_Id\":\"\",\"Home Phone\":\"\",\"I am over 18 years old\":\"\",\"In Flight Hypercare\":\"\",\"Industry\":\"\",\"Internet Consumption\":\"\",\"Is App User\":\"\",\"Is Consumer\":\"\",\"Is Trialist\":\"\",\"Job\":\"\",\"Last Call Type\":\"\",\"Last Modified By\":\"\",\"Last Stay-in-Touch Request Date\":\"\",\"Last Stay-in-Touch Save Date\":\"\",\"Lead Source\":\"\",\"Lost Date\":\"\",\"Loyal\":\"\",\"Mailing Address\":\"\",\"Market Research Authorization\":\"\",\"Member get Member Code\":\"\",\"Member get Member Promotional Code\":\"\",\"MgM Counter\":\"\",\"Mobile\":\"\",\"More Privacy Details1\":\"\",\"More Privacy Details2\":\"\",\"More Privacy Details3\":\"\",\"More Privacy Details4\":\"\",\"More Privacy Details5\":\"\",\"National ID#\":\"\",\"Neostick GR\":\"\",\"Neostik\":\"\",\"Neostik Usage\":\"\",\"Neostik Usage per day\":\"\",\"New sletter and Commercial Authorization\":\"\",\"Other Address\":\"\",\"Other devices Usage\":\"\",\"Other Phone\":\"\",\"Ow ner Profile\":\"\",\"Ow nership\":\"\",\"Parent Account\":\"\",\"Partner Account\":\"\",\"Passionate Ow ner\":\"\",\"Passionate Trial Check\":\"\",\"Personal Data Registration Authorization\":\"\",\"Phone\":\"\",\"Phone Country Code\":\"\",\"Phone Verified\":\"\",\"Post Trial Consumer Check\":\"\",\"Postal Code\":\"\",\"Preferred Tobacconist Shop\":\"\",\"Privacy Details\":\"\",\"Privacy Permission Changed\":\"\",\"Privacy Policy\":\"\",\"Pushed to Tobbaconist\":\"\",\"Range (TAR)\":\"\",\"Rating\":\"\",\"Related Lead\":\"\",\"Related Lead Created Profile\":\"\",\"Related Lead Source\":\"\",\"Rew ard Profile\":\"\",\"Rew ard Profile Code\":\"\",\"Sector\":\"\",\"Shipping Address\":\"\",\"SIC Code\":\"\",\"SIC Description\":\"\",\"Skip Repurchase Lock\":\"\",\"Smoke Habits\":\"\",\"SMS Opt Out\":\"\",\"Status\":\"\",\"Store ID\":\"\",\"Team Leader Check\":\"\",\"Ticker Symbol\":\"\",\"Time as a smoker\":\"\",\"Time of day\":\"\",\"Title\":\"\",\"Trial Experience\":\"\",\"Trial Feedback Authorization\":\"\",\"Type\":\"\",\"Use\":\"\",\"Use Reason\":\"\",\"User\":\"\",\"Variant\":\"\",\"Website\":\"\",\"Wrong Phone Number\":\"\",\"Account\":\"\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#8baf8991-26e5-4f9f-8885-fc8f6b3719f3"/>
+  <types:enrichment select="#8923144c-45ab-45fb-84d9-4310ce0ed520"/>
+  <types:enrichment select="#e423c474-2ef3-4367-b5d8-bda5cd67d037">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="requestJson"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="enterpriseDataModel"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

@@ -1,0 +1,22 @@
+api:
+ http:
+  listener:
+   host: "localhost"
+   port: "8089"
+
+scheduler:
+ frequency: "30000"
+
+bat:
+ anypoint:
+  queue:
+   destination: "ngpQueue"
+   clientId: "8edf43a045664317b327efbb15d77777"
+   clientSecret: "2ce94F44F5384CBE858D8F64b28806E4"
+   
+systemApi:
+ consumer:
+  host: "localhost"
+  port: "8021"
+  path: "accounts"
+ 

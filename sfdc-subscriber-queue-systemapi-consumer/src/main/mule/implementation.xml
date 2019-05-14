@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<sub-flow name="MessageLogger-SubFlow" doc:id="f0d67bdb-08f6-4517-ad55-27ce93fecf71">
+		<min-log:log doc:name="Log"
+			doc:id="b4c3f0ae-9b0e-4aeb-8bc2-33a373cf3b31" msg='#[vars.logmessage]'
+			transactionProperties="#[vars.transactionProperties]" />
+	</sub-flow>
+	<sub-flow name="ErrorLogger-SubFlow" doc:id="478a89db-64d8-449a-b9a8-428fae65e857">
+		<min-log:error doc:name="Error"
+			doc:id="181b44eb-3b9d-4d44-bcf5-a2ec99eb1002" transactionProperties="#[vars.transactionProperties]"
+			msg="#[vars.errormessage]" />
+	</sub-flow>
+	<flow name="subscriber-ngp-queue-systemapi-consumerFlow" doc:id="caf077dc-3795-4c66-9e88-8fa7e3466fb5">
+		<set-variable
+			value="Sending Request to Consumer Salesforce System API to check Account is present or not"
+			doc:name="logmessage" doc:id="e1a4b412-e75d-4404-9f56-0ecf7295b757"
+			variableName="logmessage" />
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="15f761ba-2fbe-4058-a4fc-007bc142148a"
+			name="MessageLogger-SubFlow" />
+		<try doc:name="Try" doc:id="dfbc130f-82b2-4a49-8ff7-fa6e48cd09a7">
+			<http:request method="GET" doc:name="GET Request Consumer System API"
+				doc:id="a7132105-0d0d-4c33-9604-683b0e3200d7" config-ref="HTTP_Request_configuration"
+				path="/${secure::systemApi.consumer.path}" target="consumerSystemApiResponse"
+				targetValue="#[message]">
+				<http:query-params><![CDATA[#[output application/java
+---
+{
+	Email__c : payload.Email
+}]]]></http:query-params>
+			</http:request>
+			<error-handler>
+				<on-error-continue enableNotifications="true"
+					logException="true" doc:name="On Error Continue" doc:id="99b2d464-c991-42ff-8b93-3a67d26e2ccf"
+					when='#[(error.muleMessage.payload as Object)."error-type" == "ACCOUNT:NOT_FOUND"]'>
+					<set-variable value="Response Recieved from Consumer Salesforce System API, No Account Found in Salesforce" doc:name="logmessage"
+						doc:id="e72112b5-8893-40ca-980a-1ac9b629532d"
+						variableName="logmessage" />
+					<flow-ref doc:name="MessageLogger-SubFlow" doc:id="46535f0e-1924-4200-890e-8d9e41442bdb"
+						name="MessageLogger-SubFlow" />
+					<set-variable value="false" doc:name="isAccountPresent" doc:id="0c286621-7fdc-4c19-b10c-becbe7a3c963" variableName="isAccountPresent"/>
+				</on-error-continue>
+				<!-- <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="be14fad6-5c5b-48a4-b13a-a8d01b3b8d72" >
+					<set-variable value="Error while calling Salesforce System API with message: #[(error.muleMessage.payload as Object).message]" doc:name="errorMessage" doc:id="1262e0a3-f173-4073-936f-585e69a048ec" variableName="errorMessage"/>
+					<flow-ref doc:name="ErrorLogger-SubFlow" doc:id="0e074645-6dc9-4fde-b4e4-0f67e83a9b68" name="ErrorLogger-SubFlow"/>
+					<set-variable value='(error.muleMessage.payload as Object)."error-type"' doc:name="errorType" doc:id="d82cd469-5f1e-471f-9c4a-9567b7794955" variableName="errorType"/>
+				</on-error-propagate> -->
+			</error-handler>
+		</try>
+		<choice doc:name="Is Account Present ?" doc:id="4abd6f38-bfee-4392-a789-c7349fd8c2a4">
+			<when
+				expression='#[vars.isAccountPresent == "false"]'>
+				<ee:transform doc:name="Transform Message"
+					doc:id="f5ce502b-779a-41c3-a42d-5d9701144cc8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+fun checkNullString(value,defaultValue) = if(value != null and value != "") value as String else defaultValue
+fun checkNullNumber(value,defaultValue) = if(value != null and value != "") value as Number else defaultValue
+fun checkNullBoolean(value,defaultValue) = if(value != null and value != "") value as Boolean else defaultValue
+---
+{
+	Account: checkNullString(payload.Account,null),
+	Account_Age__c: checkNullNumber(payload."Account Age",null),
+	AccountNumber: checkNullString(payload."Account Number",null),
+	AccountSource: "eCommerce - govype",
+	Age__c: checkNullNumber(payload.Age,null),
+	Age_verified__c: true,
+	AssistantName: checkNullString(payload.Assistant,null),
+	AssistantPhone: checkNullString(payload."Asst. Phone",null),
+	BillingAddress: checkNullString(payload."Billing Address",null),
+	Birth_Date__c: checkNullString(payload."Birth Date",null),
+	Birth_Place__c: checkNullString(payload."Birth Place",null),
+	Birthdate: checkNullString(payload.Birthdate,null),
+	Brand__c: checkNullString(payload.Brand,null),
+	Brand_Image_Aware__c: checkNullString(payload."Brand Image Aware",null),
+	Brand_social__c: checkNullString(payload."Brand social",null),
+	Categories_90__c: checkNullString(payload.Categories,null),
+	Category__c: checkNullString(payload.Category,null),
+	ChannelProgramLevelName: checkNullString(payload."Channel Program Level Name",null),
+	ChannelProgramName: checkNullString(payload."Channel Program Name",null),
+	Cigarettes__c: checkNullString(payload.Cigarettes,null),
+	Cigarettes_Consumption_90__c: checkNullNumber(payload."Cigarettes Consumption",null),
+	Cigarettes_Consumption_Before_Glo_90__c: checkNullNumber(payload."Cigarettes Consumption (Before Glo)",null),
+	Code__c: checkNullString(payload.Code,null),
+	Consumer_Age__c: checkNullNumber(payload."Consumer Age",null),
+	Consumer_Date__c: checkNullString(payload."Consumer Date",null),
+	Consumer_Date_Time__c: checkNullString(payload."Consumer Date Time",null),
+	Convert__c: checkNullBoolean(payload.Convert,null),
+	Country__c: "UK",
+	Created_by_Profile__c: checkNullString(payload."Created by Profile",null),
+	CreatedBy: checkNullString(payload."Created By",null),
+	Department: checkNullString(payload.Department,null),
+	Description: checkNullString(payload.Description,null),
+	Direct_Consumer_Check__c: checkNullBoolean(payload."Direct Consumer Check",null),
+	DoNotCall: checkNullBoolean(payload."Do Not Call",null),
+	Drop_the_Chain__c: checkNullString(payload."Drop the Chain",null),
+	Early_Adopter__c: checkNullString(payload."Early Adopter",null),
+	Education__c: checkNullString(payload.Education,null),
+	Email: checkNullString(payload.Email,null),
+	Email__c: checkNullString(payload.Email,null),
+	Email_verified__c: checkNullBoolean(payload."Email verified",null),
+	Estimated_DAC__c: checkNullString(payload."Estimated DAC",null),
+	External_Customer_Id__c: "UK-govype-" ++ checkNullString(payload."External Customer ID",null),
+	ExternalIDField: "Email__c",
+	Fax: checkNullString(payload.Fax,null),
+	FirstName: checkNullString(payload."First Name",null),
+	Fiscal_Code__c: checkNullString(payload."Fiscal Code",null),
+	Fiscal_Code_Required__c: checkNullString(payload."Fiscal Code Required",null),
+	Flagship_Assistance__c: checkNullString(payload."Flagship Assistance",null),	
+	FullName__c: checkNullString(payload."Full Name",null),
+	Gender__c: if(payload.Gender == "1") 'M' else if(payload.Gender == "2") 'F' else "N" ,
+	Glo_Agent__c: checkNullString(payload."Glo Agent",null),
+	Glo_and_Cigarettes__c: checkNullString(payload."Glo and Cigarettes",null),
+	Glo_Consumption_90__c: checkNullString(payload."Glo Consumption",null),
+	Glo_Future_Consumption_90__c: checkNullString(payload."Glo Future Consumption",null),
+	Glo_recommendation_90__c: checkNullString(payload."Glo recommendation",null),
+	Glo_Usage_90__c: checkNullString(payload."Glo Usage",null),
+	Glo_Usage_Description_90__c: checkNullString(payload."Glo Usage Description",null),
+	Health_Lifestyle__c: checkNullString(payload."Health Lifestyle",null),
+	Heroku_External_Id__c: checkNullString(payload.Heroku_External_Id,null),
+	HomePhone: checkNullString(payload."Home Phone",null),
+	In_Flight_Hypercare__c: checkNullBoolean(payload."In Flight Hypercare",null),
+	Industry: checkNullString(payload.Industry,null),
+	Internet_Consumption__c: checkNullString(payload."Internet Consumption",null),
+	Is_App_User__c: checkNullBoolean(payload."Is App User",null),
+	Is_Consumer__c: checkNullBoolean(payload."Is Consumer",null),
+	Is_Trialist__c: checkNullBoolean(payload."Is Trialist",null),
+	Job__c: checkNullString(payload.Job,null),
+	Last_Call_Type__c: checkNullString(payload."Last Call Type",null),
+	LastName: checkNullString(payload."Last Name",null),
+	LastModifiedBy: checkNullString(payload."Last Modified By",null),
+	Last_Modified_Source__c: "eCommerce - govype",
+	LeadSource: checkNullString(payload."Lead Source",null),
+	Lost_Date__c: checkNullString(payload."Lost Date",null),
+	Loyal__c: checkNullBoolean(payload.Loyal,null),
+	MailingAddress: checkNullString(payload."Mailing Address",null),
+	Member_get_Member_Code__c: checkNullString(payload."Member get Member Code",null),
+	Member_get_Member_Promotional_Code__c: checkNullString(payload."Member get Member Promotional Code",null),
+	MgM_Counter__c: checkNullNumber(payload."MgM Counter",null),
+	MobilePhone: checkNullString(payload.Mobile,null),
+	More_Privacy_Details_1__c: checkNullString(payload."More Privacy Details1",null),
+	More_Privacy_Details_2__c: checkNullString(payload."More Privacy Details2",null),
+	More_Privacy_Details_3__c: checkNullString(payload."More Privacy Details3",null),
+	More_Privacy_Details_4__c: checkNullString(payload."More Privacy Details4",null),
+	More_Privacy_Details_5__c: checkNullString(payload."More Privacy Details5",null),
+	National_ID__c: checkNullString(payload."National ID#",null),
+	Neostick_GR__c: checkNullString(payload."Neostick GR",null),
+	Neostik__c: checkNullString(payload.Neostik,null),
+	Neostik_Usage_90__c: checkNullString(payload."Neostik Usage",null),
+	Neostik_Usage_per_day_90__c: checkNullNumber(payload."Neostik Usage per day",null),
+	OtherAddress: checkNullString(payload."Other Address",null),
+	OtherPhone: checkNullString(payload."Other Phone",null),
+	Other_devices_Usage_90__c: checkNullString(payload."Other devices Usage",null),
+	Owner_Profile__c: checkNullString(payload."Owner Profile",null),
+	Ownership: checkNullString(payload."Ownership",null),
+	Parent: checkNullString(payload."Parent Account",null),
+	Passionate_Owner__c: checkNullString(payload."Passionate Owner",null),
+	Passionate_Trial_Check__c: checkNullBoolean(payload."Passionate Trial Check",null),
+	Phone: checkNullString(payload.Phone,null),
+	Phone_Country_Code__c: checkNullString(payload."Phone Country Code",null),
+	Phone_Verified__c: checkNullBoolean(payload."Phone Verified",null),
+	Post_Trial_Consumer_Check__c: checkNullBoolean(payload."Post Trial Consumer Check",null),
+	Postal_Code__c: checkNullString(payload."Postal Code",null),
+	Preferred_Tobacconist_Shop__c: checkNullString(payload."Preferred Tobacconist Shop",null),
+	Privacy_Details__c: checkNullString(payload."Privacy Details",null),
+	Privacy_Permission_Changed__c: checkNullBoolean(payload."Privacy Permission Changed",null),
+	pushed_to_tobbaconist__c: checkNullBoolean(payload."Pushed to Tobbaconist",null),
+	Range__c: checkNullString(payload.Range,null),
+	Rating: checkNullString(payload.Rating,null),
+	Related_Lead__c: checkNullString(payload."Related Lead",null),
+	Related_Lead_Created_Profile__c: checkNullString(payload."Related Lead Created Profile",null),
+	Related_Lead_Source__c: checkNullString(payload."Related Lead Source",null),
+	Registration_Permission__c: true,
+	Reward_Profile__c: checkNullString(payload."Rew ard Profile",null),
+	Reward_Profile_Code__c: checkNullString(payload."Rew ard Profile Code",null),
+	Sector__c: checkNullString(payload.Sector,null),
+	ShippingAddress: checkNullString(payload."Shipping Address",null),
+	SicDesc: checkNullString(payload."SIC Description",null),
+	Skip_Repurchase_Lock__c: checkNullBoolean(payload."Skip Repurchase Lock",null),
+	Smoke_Habits__c: checkNullString(payload."Smoke Habits",null),
+	SMS_Opt_Out__c: checkNullBoolean(payload."SMS Opt Out",null),
+	Status__c: checkNullString(payload.Status,null),
+	Store_ID__c: checkNullString(payload."Store ID",null),
+	Team_Leader_Check__c: checkNullBoolean(payload."Team Leader Check",null),
+	TickerSymbol: checkNullString(payload."Ticker Symbol",null),
+	Time_as_a_smoker__c: checkNullString(payload."Time as a smoker",null),
+	Time_of_day__c: checkNullString(payload."Time of day",null),
+	Title: checkNullString(payload.Title,null),
+	Trial_Experience__c: checkNullString(payload."Trial Experience",null),
+	Type: "Prospect",
+	Use__c: checkNullString(payload.Use,null),
+	Use_Reason__c: checkNullString(payload."Use Reason",null),
+	User__c: checkNullBoolean(payload.User,null),
+	Variant__c: checkNullString(payload.Variant,null),
+	Website: checkNullString(payload.Website,null),
+	Wrong_Phone_Number__c: checkNullBoolean(payload."Wrong Phone Number",null)
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="70742a40-8166-4d62-a709-286297a370fb" message="#[payload]" />
+				<set-variable
+					value="Account is not Present in Saleforce, sending Request to Consumer Salesforce System API for Creating Account"
+					doc:name="logmessage" doc:id="750b162f-afe7-4e6c-bf37-66685a5cc282"
+					variableName="logmessage" />
+				<flow-ref doc:name="MessageLogger-SubFlow" doc:id="ee523ecb-c132-4e20-a339-2b280b6a094a"
+					name="MessageLogger-SubFlow" />
+				<http:request doc:name="Request System API"
+					doc:id="ff6d237e-4c18-43b9-9c69-63f20adeecc9" config-ref="HTTP_Request_configuration"
+					path="/${secure::systemApi.consumer.path}" method="POST" />
+				<set-variable
+					value="Response Recieved from Consumer Saleforce System API, Account created in Saleforce"
+					doc:name="logmessage" doc:id="792b5a4d-bd89-4f18-b12b-26c21714577e"
+					variableName="logmessage" />
+				<flow-ref doc:name="MessageLogger-SubFlow" doc:id="2bd494ca-3cd9-4d72-a67d-8879bf0440bf"
+					name="MessageLogger-SubFlow" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message"
+					doc:id="6e3895a8-dff7-47ec-859b-aa7ce18214c2">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+fun checkNullString(value,defaultValue) = if(value != null and value != "") value as String else defaultValue
+fun checkNullNumber(value,defaultValue) = if(value != null and value != "") value as Number else defaultValue
+fun checkNullBoolean(value,defaultValue) = if(value != null and value != "") value as Boolean else defaultValue
+---
+{
+	Account: checkNullString(payload.Account,null),
+	Account_Age__c: checkNullNumber(payload."Account Age",null),
+	AccountNumber: checkNullString(payload."Account Number",null),
+	AccountSource: "eCommerce - govype",
+	Age__c: checkNullNumber(payload.Age,null),
+	Age_verified__c: true,
+	AssistantName: checkNullString(payload.Assistant,null),
+	AssistantPhone: checkNullString(payload."Asst. Phone",null),
+	BillingAddress: checkNullString(payload."Billing Address",null),
+	Birth_Date__c: checkNullString(payload."Birth Date",null),
+	Birth_Place__c: checkNullString(payload."Birth Place",null),
+	Birthdate: checkNullString(payload.Birthdate,null),
+	Brand__c: checkNullString(payload.Brand,null),
+	Brand_Image_Aware__c: checkNullString(payload."Brand Image Aware",null),
+	Brand_social__c: checkNullString(payload."Brand social",null),
+	Categories_90__c: checkNullString(payload.Categories,null),
+	Category__c: checkNullString(payload.Category,null),
+	ChannelProgramLevelName: checkNullString(payload."Channel Program Level Name",null),
+	ChannelProgramName: checkNullString(payload."Channel Program Name",null),
+	Cigarettes__c: checkNullString(payload.Cigarettes,null),
+	Cigarettes_Consumption_90__c: checkNullNumber(payload."Cigarettes Consumption",null),
+	Cigarettes_Consumption_Before_Glo_90__c: checkNullNumber(payload."Cigarettes Consumption (Before Glo)",null),
+	Code__c: checkNullString(payload.Code,null),
+	Consumer_Age__c: checkNullNumber(payload."Consumer Age",null),
+	Consumer_Date__c: checkNullString(payload."Consumer Date",null),
+	Consumer_Date_Time__c: checkNullString(payload."Consumer Date Time",null),
+	Convert__c: checkNullBoolean(payload.Convert,null),
+	Country__c: "UK",
+	Created_by_Profile__c: checkNullString(payload."Created by Profile",null),
+	CreatedBy: checkNullString(payload."Created By",null),
+	Department: checkNullString(payload.Department,null),
+	Description: checkNullString(payload.Description,null),
+	Direct_Consumer_Check__c: checkNullBoolean(payload."Direct Consumer Check",null),
+	DoNotCall: checkNullBoolean(payload."Do Not Call",null),
+	Drop_the_Chain__c: checkNullString(payload."Drop the Chain",null),
+	Early_Adopter__c: checkNullString(payload."Early Adopter",null),
+	Education__c: checkNullString(payload.Education,null),
+	Email: checkNullString(payload.Email,null),
+	Email__c: checkNullString(payload.Email,null),
+	Email_verified__c: checkNullBoolean(payload."Email verified",null),
+	Estimated_DAC__c: checkNullString(payload."Estimated DAC",null),
+	External_Customer_Id__c: "UK-govype-" ++ checkNullString(payload."External Customer ID",null),
+	ExternalIDField: "Email__c",
+	Fax: checkNullString(payload.Fax,null),
+	FirstName: checkNullString(payload."First Name",null),
+	Fiscal_Code__c: checkNullString(payload."Fiscal Code",null),
+	Fiscal_Code_Required__c: checkNullString(payload."Fiscal Code Required",null),
+	Flagship_Assistance__c: checkNullString(payload."Flagship Assistance",null),	
+	FullName__c: checkNullString(payload."Full Name",null),
+	Gender__c: if(payload.Gender == "1") 'M' else if(payload.Gender == "2") 'F' else "N" ,
+	Glo_Agent__c: checkNullString(payload."Glo Agent",null),
+	Glo_and_Cigarettes__c: checkNullString(payload."Glo and Cigarettes",null),
+	Glo_Consumption_90__c: checkNullString(payload."Glo Consumption",null),
+	Glo_Future_Consumption_90__c: checkNullString(payload."Glo Future Consumption",null),
+	Glo_recommendation_90__c: checkNullString(payload."Glo recommendation",null),
+	Glo_Usage_90__c: checkNullString(payload."Glo Usage",null),
+	Glo_Usage_Description_90__c: checkNullString(payload."Glo Usage Description",null),
+	Health_Lifestyle__c: checkNullString(payload."Health Lifestyle",null),
+	Heroku_External_Id__c: checkNullString(payload.Heroku_External_Id,null),
+	HomePhone: checkNullString(payload."Home Phone",null),
+	In_Flight_Hypercare__c: checkNullBoolean(payload."In Flight Hypercare",null),
+	Industry: checkNullString(payload.Industry,null),
+	Internet_Consumption__c: checkNullString(payload."Internet Consumption",null),
+	Is_App_User__c: checkNullBoolean(payload."Is App User",null),
+	Is_Consumer__c: checkNullBoolean(payload."Is Consumer",null),
+	Is_Trialist__c: checkNullBoolean(payload."Is Trialist",null),
+	Job__c: checkNullString(payload.Job,null),
+	Last_Call_Type__c: checkNullString(payload."Last Call Type",null),
+	LastName: checkNullString(payload."Last Name",null),
+	LastModifiedBy: checkNullString(payload."Last Modified By",null),
+	Last_Modified_Source__c: "eCommerce - govype",
+	LeadSource: checkNullString(payload."Lead Source",null),
+	Lost_Date__c: checkNullString(payload."Lost Date",null),
+	Loyal__c: checkNullBoolean(payload.Loyal,null),
+	MailingAddress: checkNullString(payload."Mailing Address",null),
+	Member_get_Member_Code__c: checkNullString(payload."Member get Member Code",null),
+	Member_get_Member_Promotional_Code__c: checkNullString(payload."Member get Member Promotional Code",null),
+	MgM_Counter__c: checkNullNumber(payload."MgM Counter",null),
+	MobilePhone: checkNullString(payload.Mobile,null),
+	More_Privacy_Details_1__c: checkNullString(payload."More Privacy Details1",null),
+	More_Privacy_Details_2__c: checkNullString(payload."More Privacy Details2",null),
+	More_Privacy_Details_3__c: checkNullString(payload."More Privacy Details3",null),
+	More_Privacy_Details_4__c: checkNullString(payload."More Privacy Details4",null),
+	More_Privacy_Details_5__c: checkNullString(payload."More Privacy Details5",null),
+	National_ID__c: checkNullString(payload."National ID#",null),
+	Neostick_GR__c: checkNullString(payload."Neostick GR",null),
+	Neostik__c: checkNullString(payload.Neostik,null),
+	Neostik_Usage_90__c: checkNullString(payload."Neostik Usage",null),
+	Neostik_Usage_per_day_90__c: checkNullNumber(payload."Neostik Usage per day",null),
+	OtherAddress: checkNullString(payload."Other Address",null),
+	OtherPhone: checkNullString(payload."Other Phone",null),
+	Other_devices_Usage_90__c: checkNullString(payload."Other devices Usage",null),
+	Owner_Profile__c: checkNullString(payload."Owner Profile",null),
+	Ownership: checkNullString(payload."Ownership",null),
+	Parent: checkNullString(payload."Parent Account",null),
+	Passionate_Owner__c: checkNullString(payload."Passionate Owner",null),
+	Passionate_Trial_Check__c: checkNullBoolean(payload."Passionate Trial Check",null),
+	Phone: checkNullString(payload.Phone,null),
+	Phone_Country_Code__c: checkNullString(payload."Phone Country Code",null),
+	Phone_Verified__c: checkNullBoolean(payload."Phone Verified",null),
+	Post_Trial_Consumer_Check__c: checkNullBoolean(payload."Post Trial Consumer Check",null),
+	Postal_Code__c: checkNullString(payload."Postal Code",null),
+	Preferred_Tobacconist_Shop__c: checkNullString(payload."Preferred Tobacconist Shop",null),
+	Privacy_Details__c: checkNullString(payload."Privacy Details",null),
+	Privacy_Permission_Changed__c: checkNullBoolean(payload."Privacy Permission Changed",null),
+	pushed_to_tobbaconist__c: checkNullBoolean(payload."Pushed to Tobbaconist",null),
+	Range__c: checkNullString(payload.Range,null),
+	Rating: checkNullString(payload.Rating,null),
+	Related_Lead__c: checkNullString(payload."Related Lead",null),
+	Related_Lead_Created_Profile__c: checkNullString(payload."Related Lead Created Profile",null),
+	Related_Lead_Source__c: checkNullString(payload."Related Lead Source",null),
+	Registration_Permission__c: true,
+	Reward_Profile__c: checkNullString(payload."Rew ard Profile",null),
+	Reward_Profile_Code__c: checkNullString(payload."Rew ard Profile Code",null),
+	Sector__c: checkNullString(payload.Sector,null),
+	ShippingAddress: checkNullString(payload."Shipping Address",null),
+	SicDesc: checkNullString(payload."SIC Description",null),
+	Skip_Repurchase_Lock__c: checkNullBoolean(payload."Skip Repurchase Lock",null),
+	Smoke_Habits__c: checkNullString(payload."Smoke Habits",null),
+	SMS_Opt_Out__c: checkNullBoolean(payload."SMS Opt Out",null),
+	Status__c: checkNullString(payload.Status,null),
+	Store_ID__c: checkNullString(payload."Store ID",null),
+	Team_Leader_Check__c: checkNullBoolean(payload."Team Leader Check",null),
+	TickerSymbol: checkNullString(payload."Ticker Symbol",null),
+	Time_as_a_smoker__c: checkNullString(payload."Time as a smoker",null),
+	Time_of_day__c: checkNullString(payload."Time of day",null),
+	Title: checkNullString(payload.Title,null),
+	Trial_Experience__c: checkNullString(payload."Trial Experience",null),
+	Type: "Prospect",
+	Use__c: checkNullString(payload.Use,null),
+	Use_Reason__c: checkNullString(payload."Use Reason",null),
+	User__c: checkNullBoolean(payload.User,null),
+	Variant__c: checkNullString(payload.Variant,null),
+	Website: checkNullString(payload.Website,null),
+	Wrong_Phone_Number__c: checkNullBoolean(payload."Wrong Phone Number",null)
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="e8efa5e7-20d6-4051-9770-dba21a7da1bb" />
+				<set-variable
+					value="Account is present in Saleforce, Sending Request to Consumer System API for Updating Account"
+					doc:name="logmessage" doc:id="efef32b5-1890-4a7f-bffa-a47067fe7777"
+					variableName="logmessage" />
+				<flow-ref doc:name="MessageLogger-SubFlow" doc:id="afbb7841-44f8-4f9f-91f1-a9ff9a11fe1e"
+					name="MessageLogger-SubFlow" />
+				<http:request doc:name="Request System API"
+					doc:id="de6ab566-73b1-4aba-b203-eb4423367027" config-ref="HTTP_Request_configuration"
+					path="/${secure::systemApi.consumer.path}" method="PATCH" />
+				<set-variable
+					value="Response Recieved from Consumer Salesforce System API, Account Updated"
+					doc:name="logmessage" doc:id="d9c8aa0f-925d-4e29-bc7a-0f4932d17ca2"
+					variableName="logmessage" />
+				<flow-ref doc:name="MessageLogger-SubFlow" doc:id="f3d394a5-fc5a-4e8f-8180-7dc062041770"
+					name="MessageLogger-SubFlow" />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

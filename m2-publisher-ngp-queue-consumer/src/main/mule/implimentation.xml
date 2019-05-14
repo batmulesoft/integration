@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	
+	<sub-flow name="MessageLogger-SubFlow" doc:id="3dc5b46c-40de-49df-b691-317a7f5b3893">
+		<min-log:log doc:name="Log" doc:id="8fe06b3a-22f0-4d80-85f0-a6b0e0182cee" msg='#[vars.logmessage]' transactionProperties="#[vars.transactionProperties]" />
+	</sub-flow>
+	
+	<flow name="implementation-flow" doc:id="bb6cb677-162d-49f7-9891-58e646aafdfe">
+		<!-- <set-variable value="#[attributes.headers.eventType]"
+			doc:name="eventType" doc:id="e10498c7-d5f8-4fd8-a7ce-b36fe9b2a9bf"
+			variableName="eventType" /> -->
+		<set-variable value="Sending Request to Magento System API to get Payload" doc:name="logmessage" doc:id="8af7a3f5-3e38-48bd-9f9f-27d38766d24d" variableName="logmessage"/>
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="357bd60a-574d-4eaa-bf80-be33ea8e17c9" name="MessageLogger-SubFlow"/>
+		<http:request method="GET" doc:name="GET Consumer Payload SYSTEM API"
+			doc:id="ccf7ca86-687e-4c41-986b-4ab1b7d0caba" config-ref="HTTP_Request_configuration"
+			path="/accounts">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	eventType : vars.eventType,
+	id : payload.id
+}]]]></http:query-params>
+			<http:response-validator>
+				<http:success-status-code-validator
+					values="200,201,404,400,500" />
+			</http:response-validator>
+		</http:request>
+		<set-variable value="Response (Payload) Recieved from Magento API" doc:name="logmessage" doc:id="bd5bcb32-e041-41f9-998f-972f52eb45b3" variableName="logmessage"/>
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="f282ea1d-68e2-464a-973f-a8311a53c23d" name="MessageLogger-SubFlow"/>
+		<set-variable value="#[%dw 2.0
+output application/json
+---
+payload]" doc:name="Set Variable" doc:id="95b9508f-e47f-4217-9a28-e4e93eda5c58" variableName="logmessage"/>
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="4566094e-b0bd-4095-9e18-a9ec429c20b8" name="MessageLogger-SubFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="e423c474-2ef3-4367-b5d8-bda5cd67d037" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Account Age": "",
+	"Account Currency": "",
+	"Account Name": "",
+	"Account Number": "",
+	"Account Owner": "",
+	"Account Record Type": "",
+	"Account Site": "",
+	"Account Source": "",
+	Age: "",
+	"Age verified": "",
+	"Annual Revenue": "",
+	Assistant: "",
+	"Asst. Phone": "",
+	"Billing Address": payload.default_billing,
+	"Birth Date": payload.dob,
+	"Birth Place": "",
+	Birthdate: "",
+	Brand: "",
+	"Brand Image Aware": "",
+	"Brand social": "",
+	Categories: "",
+	Category: "",
+	"Channel Program Level Name": "",
+	"Channel Program Name": "",
+	Cigarettes: "",
+	"Cigarettes Consumption": "",
+	"Cigarettes Consumption (Before Glo)": "",
+	Code: "",
+	"Consumer Age": "",
+	"Consumer Date": "",
+	"Consumer Date Time": "",
+	Convert: "",
+	Country: "",
+	"Data.com Key": "",
+	Department: "",
+	Description: "",
+	"Direct Consumer Check": "",
+	"Do Not Call": "",
+	"Drop the Chain": "",
+	"Early Adopter": "",
+	Education: "",
+	Email: payload.email,
+	"Email Opt Out": "",
+	"Email verified": "",
+	Employees: "",
+	"Estimated DAC": "",
+	"External Companies Authorization": "",
+	"External Customer ID": payload.id as String,
+	Fax: "",
+	"Fax Opt Out": "",
+	"Fiscal Code": "",
+	"Fiscal Code Required": "",
+	"Flagship Assistance": "",
+	"First Name": payload.firstname,
+	"Last Name": payload.lastname,
+	"Middle Name": payload.middlename,
+	Gender: payload.gender as String,
+	"Glo Agent": "",
+	"Glo and Cigarettes": "",
+	"Glo Consumption": "",
+	"Glo Future Consumption": "",
+	"Glo recommendation": "",
+	"Glo Usage": "",
+	"Glo Usage Description": "",
+	"Health Lifestyle": "",
+	Heroku_External_Id: "",
+	"Home Phone": "",
+	"I am over 18 years old": "",
+	"In Flight Hypercare": "",
+	Industry: "",
+	"Internet Consumption": "",
+	"Is App User": "",
+	"Is Consumer": "",
+	"Is Trialist": "",
+	Job: "",
+	"Last Call Type": "",
+	"Last Modified By": "",
+	"Last Name": payload.lastname,
+	"Last Stay-in-Touch Request Date": "",
+	"Last Stay-in-Touch Save Date": "",
+	"Lead Source": "",
+	"Lost Date": "",
+	Loyal: "",
+	"Mailing Address": "",
+	"Market Research Authorization": "",
+	"Member get Member Code": "",
+	"Member get Member Promotional Code": "",
+	"MgM Counter": "",
+	Mobile: "",
+	"More Privacy Details1": "",
+	"More Privacy Details2": "",
+	"More Privacy Details3": "",
+	"More Privacy Details4": "",
+	"More Privacy Details5": "",
+	"National ID#": "",
+	"Neostick GR": "",
+	Neostik: "",
+	"Neostik Usage": "",
+	"Neostik Usage per day": "",
+	"New sletter and Commercial Authorization": "",
+	"Other Address": "",
+	"Other devices Usage": "",
+	"Other Phone": "",
+	"Parent Account": "",
+	"Partner Account": "",
+	"Passionate Ow ner": "",
+	"Passionate Trial Check": "",
+	"Personal Data Registration Authorization": "",
+	Phone: "",
+	"Phone Country Code": "",
+	"Phone Verified": "",
+	"Post Trial Consumer Check": "",
+	"Postal Code": "",
+	"Preferred Tobacconist Shop": "",
+	"Privacy Details": "",
+	"Privacy Permission Changed": "",
+	"Privacy Policy": "",
+	"Pushed to Tobbaconist": "",
+	"Range (TAR)": "",
+	Rating: "",
+	"Related Lead": "",
+	"Related Lead Created Profile": "",
+	"Related Lead Source": "",
+	"Rew ard Profile": "",
+	"Rew ard Profile Code": "",
+	Sector: "",
+	"Owner Profile": "",
+	"Ownership": "",
+	"Shipping Address": payload.default_shipping,
+	"SIC Code": "",
+	"SIC Description": "",
+	"Skip Repurchase Lock": "",
+	"Smoke Habits": "",
+	"SMS Opt Out": "",
+	Status: "Prospect",
+	"Store ID": payload.store_id,
+	"Team Leader Check": "",
+	"Ticker Symbol": "",
+	"Time as a smoker": "",
+	"Time of day": "",
+	Title: "",
+	"Trial Experience": "",
+	"Trial Feedback Authorization": "",
+	Type: "Competitor",
+	Use: "",
+	"Use Reason": "",
+	User: "",
+	Variant: "",
+	Website: payload.website_id,
+	"Wrong Phone Number": ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0
+output application/json
+---
+payload]' doc:name="logmessage" doc:id="ab19cb0e-2117-4907-855d-7eb62c567bfe" variableName="logmessage"/>
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="8c93d751-56f9-46f3-a46d-69e60212e584" name="MessageLogger-SubFlow"/>
+		<set-variable value="Publishing Message to Anypoint MQ" doc:name="logmessage" doc:id="5f359981-96a4-42aa-9687-8dc97426dad1" variableName="logmessage"/>
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="c23034ce-5df9-488c-871c-38ec8c477bdb" name="MessageLogger-SubFlow"/>
+		<anypoint-mq:publish doc:name="Publish" doc:id="99036124-ad0e-46e5-a742-87b1870cb22e" config-ref="Anypoint_MQ_Default_subscriber" destination="${secure::bat.anypoint.queue.destination}">
+			<anypoint-mq:properties >
+				<anypoint-mq:property key="eventType" value="#[vars.eventType]" />
+			</anypoint-mq:properties>
+		</anypoint-mq:publish>
+		<set-payload value='#[%dw 2.0
+output application/json
+---
+{
+	message: "Message Published to Queue"
+}]' doc:name="Set Payload" doc:id="747fe4d6-7e4d-4751-941c-15e99a90a9a2" />
+	</flow>
+</mule>

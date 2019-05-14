@@ -1,0 +1,21 @@
+bat:
+ anypoint:
+  queue:
+   destination: "ngpQueue"
+   clientId: "![uyxLiYZK7awKodSr9y6ymANk6CvGw92oRUfU5dEOQs3W/GZFzcznAw==]"
+   clientSecret: "![hZbwKPqGrsbgGACmF1i6fPsiP6GAiwEYFhID5MPGgHjW/GZFzcznAw==]"
+   url: "https://mq-us-east-1.anypoint.mulesoft.com/api/v1"
+   maxRedilivery: "3"
+   scheduler:
+    frequency: "30000"
+   
+systemApi:
+ consumer:
+  host: "localhost"
+  port: "8091"
+  path: "accounts"
+
+  
+
+  
+ 

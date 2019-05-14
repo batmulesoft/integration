@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" file="dev.yaml" key="batngpmulesoft19" >
+		<secure-properties:encrypt algorithm="Blowfish" mode="ECB"/>
+	</secure-properties:config>
+	
+	<anypoint-mq:default-subscriber-config name="Anypoint_MQ_Default_subscriber" doc:name="Anypoint MQ Default subscriber" doc:id="6887d47e-18d2-468f-ad01-7339e5650604" pollingTime="${secure::bat.anypoint.queue.scheduler.frequency}" maxRedelivery="${secure::bat.anypoint.queue.maxRedilivery}">
+		<anypoint-mq:connection clientId="${secure::bat.anypoint.queue.clientId}" clientSecret="${secure::bat.anypoint.queue.clientSecret}" url="${secure::bat.anypoint.queue.url}"/>
+	</anypoint-mq:default-subscriber-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="d9969bac-581e-40a3-af35-2c4fb8246ab5" responseTimeout="300000">
+		<http:request-connection host="${secure::systemApi.consumer.host}" port="${secure::systemApi.consumer.port}" />
+	</http:request-config>
+	<sub-flow name="initial-audit-log-subflow" doc:id="9f516279-fce2-4cfc-b5e3-53d990747694" >
+		<min-log:new target="transactionProperties" headers="#[attributes.headers]"
+				doc:name="Initialize transaction properties" doc:id="e95b7f2c-be12-4efb-8695-b751dc43e03b" />
+
+			<min-log:put doc:name="Logging become intermediate" doc:id="b19ebb82-e195-4e52-9425-cdc51112c22b" key="logMessageType" value="INTERMEDIATE" transactionProperties="#[vars.transactionProperties]" target="transactionProperties"/>
+		<min-log:put doc:name="Set the application Name" doc:id="6c3c009f-0614-4a6f-858b-ce3354d0ab10" key="applicationName" value="#[app.name]" transactionProperties="#[vars.transactionProperties]" target="transactionProperties"/>
+		
+
+
+		<min-log:put key="eventType" value="#[attributes.message.properties.eventType]"
+				transactionProperties="#[vars.transactionProperties]"
+				doc:name="Insert method" target="transactionProperties"/>
+	</sub-flow>
+</mule>

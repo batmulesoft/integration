@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+	<flow name="interface-Flow" doc:id="d4e7e28a-5bd8-4d6f-82f0-458e08d54288">
+		<anypoint-mq:subscriber doc:name="Subscriber"
+			doc:id="53e71c95-33ec-4da5-84c8-835cc4e9fb0d" config-ref="Anypoint_MQ_Default_subscriber"
+			destination="${secure::bat.anypoint.queue.destination}" />
+		<flow-ref doc:name="initial-audit-log-subflow" doc:id="d444f259-9353-474b-9e24-12ab5c198ff7"
+			name="initial-audit-log-subflow" />
+		<set-variable value="#[attributes]" doc:name="queueAttributes"
+			doc:id="4f26d1a8-a7f1-44bc-91b9-f55908b1781c" variableName="queueAttributes" />
+		<set-variable value="#[attributes.message.properties.eventType]"
+			doc:name="eventType" doc:id="82e7eb27-2b74-4119-a664-9a7e4c6465d7"
+			variableName="eventType" />
+		<set-variable
+			value='#["Message Received from Queue API with Event Type $(vars.eventType)"]'
+			doc:name="logmessage" doc:id="8ba4d278-67fa-486c-9a0b-28124f9fa9a8"
+			variableName="logmessage" />
+		<flow-ref doc:name="MessageLogger-SubFlow" doc:id="2f63aed5-a5e6-4cf1-b8e5-b175e7347adb"
+			name="MessageLogger-SubFlow" />
+		<logger level="INFO" doc:name="Logger"
+			doc:id="231a6384-eb07-4c81-a0a5-df368bbb72ac" message="#[payload]" />
+		<choice doc:name="Choice" doc:id="36aea94b-f904-4230-8ea8-c1f46a07b11a">
+			<when expression='#[vars.eventType == "create"]'>
+				<flow-ref doc:name="subscriber-ngp-queue-systemapi-consumerFlow"
+					doc:id="1251512d-b63b-4190-a0dd-17fcb770fc47" name="subscriber-ngp-queue-systemapi-consumerFlow" />
+			</when>
+			<when expression='#[vars.eventType == "update"]'>
+				<flow-ref doc:name="subscriber-ngp-queue-systemapi-consumerFlow"
+					doc:id="a561757a-72e0-4cad-8aed-b9352c6457dc" name="subscriber-ngp-queue-systemapi-consumerFlow" />
+			</when>
+			<when expression='#[vars.eventType == "delete"]'>
+				<flow-ref doc:name="subscriber-ngp-queue-systemapi-consumerFlow"
+					doc:id="c3be2e04-965b-4ee1-8287-ceb272f5b774" name="subscriber-ngp-queue-systemapi-consumerFlow" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="32ce2cfb-bcb1-4c70-84b5-11fbc3192876" />
+			</otherwise>
+		</choice>
+		
+		
+</flow>
+	
+	</mule>

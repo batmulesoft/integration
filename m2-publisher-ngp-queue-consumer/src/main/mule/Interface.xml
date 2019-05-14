@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+
+	<flow name="api-main">
+		<http:listener config-ref="HTTP_Listener_config" path="/api/*">
+			<http:response statusCode="#[vars.httpStatus default 200]">
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<flow-ref doc:name="initial-audit-log-subflow" doc:id="2b7251b2-d871-467e-893c-0725ec67a90d"
+			name="initial-audit-log-subflow" />
+		<set-variable value="#[attributes.headers.eventType]"
+			doc:name="eventType" doc:id="0ad494f7-c782-4fa0-b4ab-0bfdfa9f16cc"
+			variableName="eventType" />
+		<choice doc:name="Choice" doc:id="91e643dc-87f9-41f8-8f3f-16579ebcea60">
+			<when expression='#[vars.eventType =="create"]'>
+				<flow-ref doc:name="implementation-flow" doc:id="68f000ba-46ad-4d65-97c7-2d81b15bf8ff"
+					name="implementation-flow" />
+			</when>
+			<when expression='#[vars.eventType =="create"]'>
+				<flow-ref doc:name="implementation-flow" doc:id="4224af6e-0dbf-4296-a47a-5424207df5de"
+					name="implementation-flow" />
+			</when>
+			<when expression='#[vars.eventType =="create"]'>
+				<flow-ref doc:name="implementation-flow" doc:id="f9f52b0f-b2fb-483e-949e-21e4ce31bdaf"
+					name="implementation-flow" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="e5f9fd3a-ae4f-42c0-8043-658ea992c0bb" />
+			</otherwise>
+		</choice>
+		
+	</flow>
+</mule>

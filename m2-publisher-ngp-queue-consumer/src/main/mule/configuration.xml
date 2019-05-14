@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+    
+	
+		
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
+		<http:listener-connection host="${secure::api.http.listener.host}" port="${secure::api.http.listener.port}"/>
+	</http:listener-config>
+	
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" file="dev.yaml" key="batngpmulesoft19" >
+		<secure-properties:encrypt algorithm="Blowfish" mode="ECB"/>
+	</secure-properties:config>
+	<anypoint-mq:default-subscriber-config name="Anypoint_MQ_Default_subscriber" doc:name="Anypoint MQ Default subscriber" doc:id="6887d47e-18d2-468f-ad01-7339e5650604" acknowledgementMode="MANUAL" pollingTime="${secure::scheduler.frequency}">
+		<anypoint-mq:connection clientId="${secure::bat.anypoint.queue.clientId}" clientSecret="${secure::bat.anypoint.queue.clientSecret}" />
+	</anypoint-mq:default-subscriber-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="d9969bac-581e-40a3-af35-2c4fb8246ab5" basePath="/api">
+		<http:request-connection host="localhost" port="8021" />
+	</http:request-config>
+	<sub-flow name="initial-audit-log-subflow" doc:id="f982fcfb-6756-428c-9356-59e829af3634" >
+		<min-log:new target="transactionProperties" headers="#[attributes.headers]"
+				doc:name="Initialize transaction properties" doc:id="f2940502-8eca-41e7-a4f9-5f8edb243220" />
+
+			<min-log:put doc:name="Logging become intermediate" doc:id="d626b3a3-d302-4209-9647-a3037e76782f" key="logMessageType" value="INTERMEDIATE" transactionProperties="#[vars.transactionProperties]" target="transactionProperties"/>
+		<min-log:put doc:name="Set the application Name" doc:id="6245ca83-5a7c-4b5b-bcc1-cfa4309df300" key="applicationName" value="#[app.name]" transactionProperties="#[vars.transactionProperties]" target="transactionProperties"/>
+		<min-log:put key="inboundUri" value="#[attributes.relativePath]"
+				transactionProperties="#[vars.transactionProperties]"
+				doc:name="Insert resource" target="transactionProperties"/>
+		
+
+
+		<min-log:put key="httpMethod" value="#[attributes.method]"
+				transactionProperties="#[vars.transactionProperties]"
+				doc:name="Insert method" target="transactionProperties"/>
+				
+			<min-log:put key="scheme" value="#[attributes.scheme]"
+				transactionProperties="#[vars.transactionProperties]"
+				doc:name="Insert scheme" target="transactionProperties"/>
+	</sub-flow>
+</mule>
